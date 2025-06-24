@@ -9,6 +9,10 @@ Repository holds everything necessary for model training and inference
 
 `dvc repro train-model -f`
 
+для тренування модель залежить від датасету 
+
+`../../mlops-data/dataset`
+
 ## Інференс моделі
 
 `dvc repro run-model -f`
