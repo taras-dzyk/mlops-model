@@ -1,0 +1,21 @@
+stages:
+  prepare-env:
+    cmd: |
+      docker compose -f ray/docker-compose.yml down || true
+      docker compose -f ray/docker-compose.yml up -d --build
+    deps:
+      - ray/docker-compose.yml
+
+  train-model:
+    cmd: docker exec ray-head python3 train_img_ray.py
+    deps:
+      - ray/ray-head/train_img_ray.py
+      - ../mlops-data/dataset
+    params: []
+  
+  run-model:
+    cmd: docker exec ray-head python3 run_img_ray.py
+    deps:
+      - ray/ray-head/run_img_ray.py
+      - ../mlops-data/dataset
+    params: []

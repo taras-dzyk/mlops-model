@@ -1,0 +1,59 @@
+version: "3.8"
+services:
+  ray-head:
+    build: ./ray-head
+    container_name: ray-head
+    volumes:
+      - ../../mlops-data/dataset:/app/dataset
+      - ./ray-head:/app
+    ports:
+      - "8265:8265"
+      - "6379:6379" 
+      - "10001:10001"
+      - "8000:8000"   # Prometheus
+    environment:
+      - RAY_HEAD_SERVICE_HOST=ray-head
+      - WANDB_API_KEY=aeb42897d45c7121613c572ec875a97a22ddf792
+      - WANDB_ENTITY=taras-dzyk-personal
+    command: >
+      bash -c "ray start --head --port=6379 --dashboard-host=0.0.0.0 && tail -f /dev/null"
+    networks:
+      - ray-net
+
+  ray-worker:
+    build: ./ray-worker
+    container_name: ray-worker
+    depends_on:
+      - ray-head
+    environment:
+      - RAY_HEAD_SERVICE_HOST=ray-head
+    command: >
+      bash -c "ray start --address=ray-head:6379 && tail -f /dev/null"
+    networks:
+      - ray-net
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
+    networks:
+      - ray-net
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - ray-net
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin123
+
+
+networks:
+  ray-net:
